@@ -2,9 +2,8 @@
 
 An AI-Powered Smart Retail Intelligence and Decision-Support Platform combining Computer Vision, Object Detection, Customer Tracking, Inventory Analytics, Demand Forecasting, and Dynamic Pricing Recommendations.
 
-> **Current Status (Milestone 2 — Data Pipeline & Business Analytics):**
-> The project has completed its Foundation and Data Pipeline stages. The backend API serves live analytics from real dataset ingestion (Rossmann, Grocery, M5). The React dashboard renders executive KPIs, sales trend charts, store performance, and product catalog via live API calls.
-> ⚠️ **Note:** The AI intelligence modules (YOLO shelf monitoring, MOT customer tracking, demand forecasting model training, dynamic pricing, and misplacement detection) are planned for subsequent incremental stages and are not implemented yet.
+> **Current Status (Milestone 3 — Demand Forecasting & Predictive Restocking):**
+> The project has completed its Foundation, Data Pipeline, Executive Analytics, and Demand Forecasting stages. The backend API serves live demand forecasts (Linear Regression + Time Features) and prioritized restocking recommendations from the M5 dataset. The React frontend features interactive forecast charts, dynamic lead-time reorder calculations, and human-in-the-loop approval workflows.
 
 ---
 
@@ -13,6 +12,7 @@ An AI-Powered Smart Retail Intelligence and Decision-Support Platform combining 
 ### Backend
 - **Framework:** Python 3.12+ / FastAPI
 - **Database / ORM:** SQLAlchemy 2.0+ (SQLite default for local development, PostgreSQL ready for production)
+- **Machine Learning / Analytics:** Scikit-Learn (LinearRegression, StandardScaler), Pandas, NumPy
 - **Validation:** Pydantic 2.0+
 - **Testing:** Pytest, pytest-asyncio, HTTPX
 
@@ -40,22 +40,22 @@ smart-retail-system/
 │   │   │       ├── health.py           # /api/v1/health and /api/v1/status
 │   │   │       ├── analytics.py        # /api/v1/analytics/overview & /sales
 │   │   │       ├── products.py         # /api/v1/products
-│   │   │       └── stores.py           # /api/v1/stores
+│   │   │       ├── stores.py           # /api/v1/stores
+│   │   │       └── forecasting.py      # /api/v1/forecast & /restocking/recommendations
 │   │   ├── database/                   # SQLAlchemy engine & session factory
 │   │   ├── models/                     # ORM entity models
-│   │   │   ├── product.py
-│   │   │   ├── store.py
-│   │   │   └── analytics.py
 │   │   ├── schemas/                    # Pydantic request/response schemas
-│   │   ├── services/                   # Business logic & ETL pipelines
+│   │   ├── services/                   # Business logic, ML models & ETL
 │   │   │   ├── grocery_etl.py          # Grocery catalog ingestion
 │   │   │   ├── rossmann_etl.py         # Rossmann sales ingestion
 │   │   │   ├── m5_etl.py               # M5 forecasting data preparation
 │   │   │   ├── analytics_service.py    # KPI queries
+│   │   │   ├── forecasting_service.py  # Demand forecasting engine
+│   │   │   ├── restocking_service.py   # Restocking recommendation heuristics
 │   │   │   └── data_manager.py         # Pipeline orchestrator
 │   │   ├── config.py                   # Environment configuration
 │   │   └── main.py                     # FastAPI entrypoint
-│   ├── tests/                          # Backend unit & integration tests (17 tests)
+│   ├── tests/                          # Backend unit & integration tests (36 tests)
 │   ├── .env.example                    # Backend environment template
 │   └── requirements.txt               # Pinned Python dependencies
 ├── frontend/
@@ -63,6 +63,7 @@ smart-retail-system/
 │   │   ├── components/                 # Reusable UI layout components
 │   │   ├── pages/
 │   │   │   ├── DashboardPage.tsx       # Executive analytics dashboard
+│   │   │   ├── PredictiveRestockingPage.tsx # Demand forecasting & restocking UI
 │   │   │   └── ...                     # Module placeholder pages
 │   │   ├── services/api.ts             # Centralized backend API client
 │   │   ├── types/index.ts              # TypeScript type definitions
@@ -79,6 +80,7 @@ smart-retail-system/
 ├── AGENTS.md                           # Engineering rules & development principles
 ├── DATASET_AUDIT.md                    # Dataset inspection report
 ├── DATA_PIPELINE.md                    # ETL pipeline architecture documentation
+├── FORECASTING.md                      # Demand forecasting & restocking documentation
 └── README.md
 ```
 
@@ -97,6 +99,13 @@ smart-retail-system/
 |--------|----------|-------------|
 | GET | `/api/v1/analytics/overview` | Executive KPIs (revenue, footfall, stores, promo lift) |
 | GET | `/api/v1/analytics/sales?limit=60` | Time-series daily sales trend data |
+
+### Forecasting & Restocking
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/restocking/recommendations` | Prioritized restocking recommendations with urgency levels |
+| GET | `/api/v1/forecast/{item_id}` | 7/14/28-day ahead demand prediction with validation metrics |
+| GET | `/api/v1/forecast` | List available forecastable SKUs and stores |
 
 ### Products
 | Method | Endpoint | Description |

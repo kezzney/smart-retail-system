@@ -102,3 +102,54 @@ export interface StoreList {
   total: number;
   items: StoreItem[];
 }
+
+export interface ForecastPoint {
+  date: string;
+  actual: number | null;
+  predicted: number;
+}
+
+export interface ForecastResponse {
+  item_id: string;
+  store_id: string;
+  category: string;
+  model_name: string;
+  forecast_horizon_days: number;
+  mae: number | null;
+  rmse: number | null;
+  history: ForecastPoint[];
+  forecast: ForecastPoint[];
+}
+
+export type RestockUrgency = 'CRITICAL' | 'REORDER_SOON' | 'MONITOR' | 'ADEQUATE';
+
+export interface RestockingRecommendation {
+  item_id: string;
+  store_id: string;
+  category: string;
+  avg_recent_demand: number;
+  avg_forecast_demand: number;
+  demand_trend_pct: number;
+  recommended_reorder_qty: number;
+  urgency: RestockUrgency;
+  reason: string;
+  forecast_horizon_days: number;
+}
+
+export interface RestockingListResponse {
+  total: number;
+  limit: number;
+  items: RestockingRecommendation[];
+}
+
+export interface ForecastCatalogItem {
+  item_id: string;
+  store_id: string;
+  category: string;
+}
+
+export interface ForecastCatalogResponse {
+  total: number;
+  items: ForecastCatalogItem[];
+}
+

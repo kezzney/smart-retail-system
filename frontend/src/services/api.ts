@@ -10,6 +10,9 @@ import type {
   SalesTrendData,
   ProductList,
   StoreList,
+  RestockingListResponse,
+  ForecastResponse,
+  ForecastCatalogResponse,
 } from '../types';
 
 const API_BASE_URL =
@@ -89,3 +92,36 @@ export async function getStores(limit = 20, sortBy = 'total_sales'): Promise<Sto
   const response = await apiClient.get<StoreList>(`/api/v1/stores?limit=${limit}&sort_by=${sortBy}`);
   return response.data;
 }
+
+/**
+ * Fetch restocking recommendations
+ */
+export async function getRestockingRecommendations(limit = 50, urgency?: string): Promise<RestockingListResponse> {
+  const params = new URLSearchParams();
+  params.append('limit', String(limit));
+  if (urgency) params.append('urgency', urgency);
+
+  const response = await apiClient.get<RestockingListResponse>(`/api/v1/restocking/recommendations?${params.toString()}`);
+  return response.data;
+}
+
+/**
+ * Fetch demand forecast for a single SKU
+ */
+export async function getItemForecast(itemId: string, storeId = 'CA_1', horizon = 14): Promise<ForecastResponse> {
+  const response = await apiClient.get<ForecastResponse>(`/api/v1/forecast/${encodeURIComponent(itemId)}?store_id=${encodeURIComponent(storeId)}&horizon=${horizon}`);
+  return response.data;
+}
+
+/**
+ * Fetch forecast catalog items
+ */
+export async function getForecastCatalog(limit = 100, category?: string): Promise<ForecastCatalogResponse> {
+  const params = new URLSearchParams();
+  params.append('limit', String(limit));
+  if (category) params.append('category', category);
+
+  const response = await apiClient.get<ForecastCatalogResponse>(`/api/v1/forecast?${params.toString()}`);
+  return response.data;
+}
+
