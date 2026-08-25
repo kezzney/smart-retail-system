@@ -5,10 +5,17 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import api_router
 from app.config import settings
+from app.database.connection import engine
+from app.database.base import Base
+# Import models to ensure they are registered with Base metadata
+import app.models  # noqa: F401
 
 
 def create_app() -> FastAPI:
     """Application factory for Smart Retail Intelligence System."""
+    # Ensure database schema tables exist
+    Base.metadata.create_all(bind=engine)
+
     application = FastAPI(
         title=settings.PROJECT_NAME,
         version=settings.VERSION,

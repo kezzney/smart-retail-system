@@ -4,6 +4,10 @@ import os
 from functools import lru_cache
 from typing import List
 
+# Base directory for the repository root
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DEFAULT_DB_FILE = os.path.join(BASE_DIR, "smart_retail.db").replace("\\", "/")
+
 
 class Settings:
     """Application settings loaded from environment variables with sensible defaults."""
@@ -14,9 +18,21 @@ class Settings:
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
 
     # Database configuration
-    # Defaults to SQLite for local development; can be overridden by PostgreSQL URL
+    # Defaults to canonical SQLite DB in repository root; can be overridden by PostgreSQL URL
     DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", "sqlite:///./smart_retail.db"
+        "DATABASE_URL", f"sqlite:///{DEFAULT_DB_FILE}"
+    )
+
+    # External Raw Datasets Root
+    SMART_RETAIL_DATA_ROOT: str = os.getenv(
+        "SMART_RETAIL_DATA_ROOT",
+        r"C:\Users\CHANDAN\Downloads\SmartRetailData",
+    )
+
+    # Repository Processed Data Directory
+    PROCESSED_DATA_DIR: str = os.getenv(
+        "PROCESSED_DATA_DIR",
+        os.path.join(BASE_DIR, "data", "processed"),
     )
 
     # CORS configuration
