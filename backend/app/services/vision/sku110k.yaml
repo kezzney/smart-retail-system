@@ -1,0 +1,11 @@
+# SKU-110K Dataset Configuration for YOLOv8 Fine-Tuning
+# References the external read-only raw dataset directly without copying.
+
+path: C:/Users/CHANDAN/Downloads/SmartRetailData/01_SKU110K/raw/SKU110K_fixed
+train: images/train
+val: images/val
+test: images/test
+
+# Classes
+names:
+  0: product

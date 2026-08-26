@@ -46,9 +46,17 @@ class Settings:
     ]
 
     # Computer Vision / YOLO Configuration
-    YOLO_MODEL_PATH: str = os.getenv("YOLO_MODEL_PATH", "yolov8n.pt")
-    DEFAULT_CONFIDENCE_THRESHOLD: float = float(os.getenv("DEFAULT_CONFIDENCE_THRESHOLD", "0.20"))
+    # Automatically resolves fine-tuned SKU-110K best.pt if present, falling back to base yolov8n.pt
+    _DEFAULT_FINE_TUNED_PATH: str = os.path.join(
+        BASE_DIR, "runs", "detect", "runs", "detect", "sku110k_poc", "weights", "best.pt"
+    )
+    YOLO_MODEL_PATH: str = os.getenv(
+        "YOLO_MODEL_PATH",
+        _DEFAULT_FINE_TUNED_PATH if os.path.exists(_DEFAULT_FINE_TUNED_PATH) else "yolov8n.pt",
+    )
+    DEFAULT_CONFIDENCE_THRESHOLD: float = float(os.getenv("DEFAULT_CONFIDENCE_THRESHOLD", "0.25"))
     DEFAULT_IOU_THRESHOLD: float = float(os.getenv("DEFAULT_IOU_THRESHOLD", "0.45"))
+
 
 
 

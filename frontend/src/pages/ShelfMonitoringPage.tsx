@@ -60,7 +60,7 @@ export const ShelfMonitoringPage: React.FC = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedPreviewUrl, setUploadedPreviewUrl] = useState<string | null>(null);
 
-  const [confidence, setConfidence] = useState<number>(0.20);
+  const [confidence, setConfidence] = useState<number>(0.25);
   const [showBoxes, setShowBoxes] = useState<boolean>(true);
   const [showGaps, setShowGaps] = useState<boolean>(true);
 

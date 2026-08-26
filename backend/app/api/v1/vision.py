@@ -110,7 +110,7 @@ def get_sample_image(sample_id: str):
 async def detect_products(
     file: Optional[UploadFile] = File(None, description="Uploaded shelf image file (JPEG/PNG)"),
     sample_id: Optional[str] = Query(None, description="Pre-configured sample ID (e.g. 'sample_01')"),
-    conf: float = Query(0.20, ge=0.01, le=1.0, description="Detection confidence threshold"),
+    conf: float = Query(0.25, ge=0.01, le=1.0, description="Detection confidence threshold"),
     iou: float = Query(0.45, ge=0.01, le=1.0, description="NMS IOU overlap threshold"),
 ):
     """Run product detection and return raw bounding boxes."""
@@ -145,7 +145,7 @@ async def detect_products(
 async def analyze_shelf(
     file: Optional[UploadFile] = File(None, description="Uploaded shelf image file (JPEG/PNG)"),
     sample_id: Optional[str] = Query(None, description="Pre-configured sample ID (e.g. 'sample_01')"),
-    conf: float = Query(0.20, ge=0.01, le=1.0, description="Detection confidence threshold"),
+    conf: float = Query(0.25, ge=0.01, le=1.0, description="Detection confidence threshold"),
     iou: float = Query(0.45, ge=0.01, le=1.0, description="NMS IOU overlap threshold"),
 ):
     """Perform full shelf monitoring and stock gap analysis."""

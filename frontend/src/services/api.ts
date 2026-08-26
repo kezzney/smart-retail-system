@@ -153,7 +153,7 @@ export async function detectProducts(options: {
   conf?: number;
   iou?: number;
 }): Promise<DetectionResponse> {
-  const conf = options.conf ?? 0.20;
+  const conf = options.conf ?? 0.25;
   const iou = options.iou ?? 0.45;
 
   if (options.file) {
@@ -186,7 +186,8 @@ export async function analyzeShelf(options: {
   conf?: number;
   iou?: number;
 }): Promise<ShelfAnalysisResponse> {
-  const conf = options.conf ?? 0.20;
+  const conf = options.conf ?? 0.25;
+
   const iou = options.iou ?? 0.45;
 
   if (options.file) {

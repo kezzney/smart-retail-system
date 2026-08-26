@@ -30,6 +30,9 @@ data/processed/
 *.onnx
 *.h5
 *.keras
+runs/
+wandb/
+
 
 # Jupyter
 .ipynb_checkpoints/
