@@ -50,8 +50,32 @@ PRECONFIGURED_SAMPLES: List[dict] = [
 ]
 
 
+def _download_demo_image(filename: str, dest_path: str) -> None:
+    """Download a demo image from the configured Hugging Face URL into dest_path atomically."""
+    import urllib.request
+    import tempfile
+
+    url = f"{settings.DEMO_IMAGES_BASE_URL}/{filename}"
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(dest_path), suffix=".tmp")
+    try:
+        os.close(tmp_fd)
+        urllib.request.urlretrieve(url, tmp_path)
+        os.replace(tmp_path, dest_path)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
+
+
 def _resolve_sample_path(sample_id: str) -> str:
-    """Find the filesystem path for a preconfigured sample ID."""
+    """Find (or download) the filesystem path for a preconfigured sample ID.
+
+    Resolution order:
+    1. Local demo image cache  (DEMO_IMAGES_DIR / filename)
+    2. Full SKU-110K dataset   (SMART_RETAIL_DATA_ROOT / … / images / split / filename)
+    3. Download from Hugging Face and store in DEMO_IMAGES_DIR
+    """
     sample = next((s for s in PRECONFIGURED_SAMPLES if s["sample_id"] == sample_id), None)
     if not sample:
         raise HTTPException(
@@ -59,6 +83,14 @@ def _resolve_sample_path(sample_id: str) -> str:
             detail=f"Sample '{sample_id}' not found. Available samples: {[s['sample_id'] for s in PRECONFIGURED_SAMPLES]}",
         )
 
+    filename = sample["filename"]
+
+    # 1. Check local demo image cache
+    cached_path = os.path.join(settings.DEMO_IMAGES_DIR, filename)
+    if os.path.exists(cached_path):
+        return cached_path
+
+    # 2. Check full local SKU-110K dataset
     val_dir = os.path.join(
         settings.SMART_RETAIL_DATA_ROOT,
         "01_SKU110K",
@@ -67,15 +99,19 @@ def _resolve_sample_path(sample_id: str) -> str:
         "images",
         sample["split"],
     )
-    img_path = os.path.join(val_dir, sample["filename"])
+    local_path = os.path.join(val_dir, filename)
+    if os.path.exists(local_path):
+        return local_path
 
-    if not os.path.exists(img_path):
+    # 3. Download from Hugging Face and cache
+    try:
+        _download_demo_image(filename, cached_path)
+        return cached_path
+    except Exception as exc:
         raise HTTPException(
-            status_code=404,
-            detail=f"Sample image file '{sample['filename']}' not found on disk at {img_path}",
+            status_code=503,
+            detail=f"Demo image '{filename}' is not available locally and could not be downloaded: {exc}",
         )
-
-    return img_path
 
 
 @router.get(

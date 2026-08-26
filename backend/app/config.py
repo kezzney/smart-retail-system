@@ -55,6 +55,15 @@ class Settings:
         "YOLO_MODEL_CACHE_DIR",
         os.path.join(BASE_DIR, "data", "models"),
     )
+    # Demo Images Configuration (remote Hugging Face asset repository)
+    DEMO_IMAGES_BASE_URL: str = os.getenv(
+        "DEMO_IMAGES_BASE_URL",
+        "https://huggingface.co/Kezzney/smart-retail-yolov8/resolve/main",
+    )
+    DEMO_IMAGES_DIR: str = os.getenv(
+        "DEMO_IMAGES_DIR",
+        os.path.join(BASE_DIR, "data", "demo_images"),
+    )
     # Local fine-tuned model path from training run
     _DEFAULT_LOCAL_MODEL_PATH: str = os.path.join(
         BASE_DIR, "runs", "detect", "runs", "detect", "sku110k_poc", "weights", "best.pt"
@@ -62,6 +71,7 @@ class Settings:
     YOLO_MODEL_PATH: str = os.getenv("YOLO_MODEL_PATH", _DEFAULT_LOCAL_MODEL_PATH)
     DEFAULT_CONFIDENCE_THRESHOLD: float = float(os.getenv("DEFAULT_CONFIDENCE_THRESHOLD", "0.25"))
     DEFAULT_IOU_THRESHOLD: float = float(os.getenv("DEFAULT_IOU_THRESHOLD", "0.45"))
+
 
 
 

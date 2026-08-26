@@ -20,9 +20,10 @@ frontend/dist/
 *.sqlite
 *.sqlite3
 
-# Raw and processed datasets
+# Raw datasets and runtime caches
 data/raw/
-data/processed/
+data/models/
+data/demo_images/
 
 # ML artifacts
 *.pt
@@ -32,6 +33,7 @@ data/processed/
 *.keras
 runs/
 wandb/
+
 
 
 # Jupyter
