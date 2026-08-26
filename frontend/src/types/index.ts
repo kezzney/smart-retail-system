@@ -153,3 +153,58 @@ export interface ForecastCatalogResponse {
   items: ForecastCatalogItem[];
 }
 
+export interface BoundingBox {
+  x_min: number;
+  y_min: number;
+  x_max: number;
+  y_max: number;
+  confidence: number;
+  class_id: number;
+  class_name: string;
+}
+
+export interface DetectionResponse {
+  total_detections: number;
+  inference_time_ms: number;
+  image_width: number;
+  image_height: number;
+  confidence_threshold: number;
+  detections: BoundingBox[];
+}
+
+export interface ShelfGap {
+  shelf_row: number;
+  gap_x_start: number;
+  gap_x_end: number;
+  gap_width: number;
+  estimated_missing_units: number;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface ShelfAnalysisResponse {
+  total_detected_products: number;
+  estimated_shelf_capacity: number;
+  estimated_occupancy_pct: number;
+  stock_status: 'OPTIMAL' | 'MODERATE' | 'LOW_STOCK' | 'CRITICAL_STOCKOUT';
+  detected_gaps: ShelfGap[];
+  detections: BoundingBox[];
+  inference_time_ms: number;
+  image_width: number;
+  image_height: number;
+  disclaimer: string;
+}
+
+export interface SampleImageItem {
+  sample_id: string;
+  filename: string;
+  split: string;
+  title: string;
+  description: string;
+}
+
+export interface SampleImagesResponse {
+  total: number;
+  samples: SampleImageItem[];
+}
+
+

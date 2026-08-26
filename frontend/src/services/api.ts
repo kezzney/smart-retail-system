@@ -13,7 +13,11 @@ import type {
   RestockingListResponse,
   ForecastResponse,
   ForecastCatalogResponse,
+  DetectionResponse,
+  ShelfAnalysisResponse,
+  SampleImagesResponse,
 } from '../types';
+
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -124,4 +128,87 @@ export async function getForecastCatalog(limit = 100, category?: string): Promis
   const response = await apiClient.get<ForecastCatalogResponse>(`/api/v1/forecast?${params.toString()}`);
   return response.data;
 }
+
+/**
+ * Fetch available sample shelf images
+ */
+export async function getVisionSamples(): Promise<SampleImagesResponse> {
+  const response = await apiClient.get<SampleImagesResponse>('/api/v1/vision/samples');
+  return response.data;
+}
+
+/**
+ * Get direct URL to sample image
+ */
+export function getSampleImageUrl(sampleId: string): string {
+  return `${API_BASE_URL}/api/v1/vision/samples/${encodeURIComponent(sampleId)}/image`;
+}
+
+/**
+ * Run product detection and return raw bounding boxes
+ */
+export async function detectProducts(options: {
+  file?: File;
+  sampleId?: string;
+  conf?: number;
+  iou?: number;
+}): Promise<DetectionResponse> {
+  const conf = options.conf ?? 0.20;
+  const iou = options.iou ?? 0.45;
+
+  if (options.file) {
+    const formData = new FormData();
+    formData.append('file', options.file);
+    const response = await apiClient.post<DetectionResponse>(
+      `/api/v1/vision/detect?conf=${conf}&iou=${iou}`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    return response.data;
+  } else if (options.sampleId) {
+    const response = await apiClient.post<DetectionResponse>(
+      `/api/v1/vision/detect?sample_id=${encodeURIComponent(options.sampleId)}&conf=${conf}&iou=${iou}`
+    );
+    return response.data;
+  } else {
+    throw new Error('Must provide either a file or sampleId for product detection');
+  }
+}
+
+/**
+ * Run shelf monitoring and stock gap analysis
+ */
+export async function analyzeShelf(options: {
+  file?: File;
+  sampleId?: string;
+  conf?: number;
+  iou?: number;
+}): Promise<ShelfAnalysisResponse> {
+  const conf = options.conf ?? 0.20;
+  const iou = options.iou ?? 0.45;
+
+  if (options.file) {
+    const formData = new FormData();
+    formData.append('file', options.file);
+    const response = await apiClient.post<ShelfAnalysisResponse>(
+      `/api/v1/vision/shelf-analysis?conf=${conf}&iou=${iou}`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    return response.data;
+  } else if (options.sampleId) {
+    const response = await apiClient.post<ShelfAnalysisResponse>(
+      `/api/v1/vision/shelf-analysis?sample_id=${encodeURIComponent(options.sampleId)}&conf=${conf}&iou=${iou}`
+    );
+    return response.data;
+  } else {
+    throw new Error('Must provide either a file or sampleId for shelf analysis');
+  }
+}
+
+
 

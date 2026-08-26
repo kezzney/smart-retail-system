@@ -45,6 +45,12 @@ class Settings:
         if origin.strip()
     ]
 
+    # Computer Vision / YOLO Configuration
+    YOLO_MODEL_PATH: str = os.getenv("YOLO_MODEL_PATH", "yolov8n.pt")
+    DEFAULT_CONFIDENCE_THRESHOLD: float = float(os.getenv("DEFAULT_CONFIDENCE_THRESHOLD", "0.20"))
+    DEFAULT_IOU_THRESHOLD: float = float(os.getenv("DEFAULT_IOU_THRESHOLD", "0.45"))
+
+
 
 @lru_cache()
 def get_settings() -> Settings:
