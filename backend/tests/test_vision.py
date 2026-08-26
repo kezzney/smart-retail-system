@@ -139,11 +139,13 @@ def test_determine_stock_status_critical():
 
 def test_detector_missing_model_handling():
     """Detector should raise RuntimeError if model cannot be loaded."""
-    detector = YOLODetector(model_path="non_existent_weights_xyz123.pt")
-    assert not detector.is_available
-    with pytest.raises(RuntimeError) as exc_info:
-        detector.detect("dummy_path.jpg")
-    assert "not available" in str(exc_info.value).lower()
+    with patch("ultralytics.YOLO", side_effect=Exception("Failed to load weights")):
+        detector = YOLODetector(model_path="non_existent_weights_xyz123.pt")
+        assert not detector.is_available
+        with pytest.raises(RuntimeError) as exc_info:
+            detector.detect("dummy_path.jpg")
+        assert "not available" in str(exc_info.value).lower()
+
 
 
 # ─── API Endpoints Tests ──────────────────────────────────────────────────────
@@ -248,3 +250,42 @@ def test_shelf_analysis_endpoint_with_mock(client):
         assert data["estimated_shelf_capacity"] > 3
         assert len(data["detected_gaps"]) >= 1
         assert "disclaimer" in data
+
+
+# ─── Model Resolution & Remote Download Tests ─────────────────────────────────
+
+def test_resolve_model_path_with_existing_local():
+    """If local model file exists, _resolve_model_path should return it directly."""
+    detector = YOLODetector.__new__(YOLODetector)
+    detector.model_path = "existing_fake_local.pt"
+    with patch("os.path.exists", return_value=True):
+        resolved = detector._resolve_model_path()
+        assert resolved == "existing_fake_local.pt"
+
+
+def test_resolve_model_path_downloads_when_missing_local(tmp_path):
+    """If local model is missing, it should download from YOLO_MODEL_URL and cache it."""
+    detector = YOLODetector.__new__(YOLODetector)
+    detector.model_path = str(tmp_path / "non_existent_local.pt")
+
+    target_cache_file = str(tmp_path / "cache" / "best.pt")
+
+    with patch("app.config.settings.YOLO_MODEL_CACHE_DIR", str(tmp_path / "cache")), \
+         patch("app.config.settings.YOLO_MODEL_URL", "https://huggingface.co/test/best.pt"), \
+         patch("app.services.vision.detector._download_model_from_url", return_value=target_cache_file) as mock_dl:
+        resolved = detector._resolve_model_path()
+        assert resolved == target_cache_file
+        mock_dl.assert_called_once_with("https://huggingface.co/test/best.pt", target_cache_file)
+
+
+def test_resolve_model_path_falls_back_on_download_error(tmp_path):
+    """If remote download fails, it should fall back to yolov8n.pt without crashing."""
+    detector = YOLODetector.__new__(YOLODetector)
+    detector.model_path = str(tmp_path / "non_existent_local.pt")
+
+    with patch("app.config.settings.YOLO_MODEL_CACHE_DIR", str(tmp_path / "cache")), \
+         patch("app.config.settings.YOLO_MODEL_URL", "https://huggingface.co/test/best.pt"), \
+         patch("app.services.vision.detector._download_model_from_url", side_effect=Exception("Network error")):
+        resolved = detector._resolve_model_path()
+        assert resolved == "yolov8n.pt"
+

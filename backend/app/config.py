@@ -46,16 +46,23 @@ class Settings:
     ]
 
     # Computer Vision / YOLO Configuration
-    # Automatically resolves fine-tuned SKU-110K best.pt if present, falling back to base yolov8n.pt
-    _DEFAULT_FINE_TUNED_PATH: str = os.path.join(
+    # Remote fine-tuned model URL (Hugging Face model repository)
+    YOLO_MODEL_URL: str = os.getenv(
+        "YOLO_MODEL_URL",
+        "https://huggingface.co/Kezzney/smart-retail-yolov8/resolve/main/best.pt",
+    )
+    YOLO_MODEL_CACHE_DIR: str = os.getenv(
+        "YOLO_MODEL_CACHE_DIR",
+        os.path.join(BASE_DIR, "data", "models"),
+    )
+    # Local fine-tuned model path from training run
+    _DEFAULT_LOCAL_MODEL_PATH: str = os.path.join(
         BASE_DIR, "runs", "detect", "runs", "detect", "sku110k_poc", "weights", "best.pt"
     )
-    YOLO_MODEL_PATH: str = os.getenv(
-        "YOLO_MODEL_PATH",
-        _DEFAULT_FINE_TUNED_PATH if os.path.exists(_DEFAULT_FINE_TUNED_PATH) else "yolov8n.pt",
-    )
+    YOLO_MODEL_PATH: str = os.getenv("YOLO_MODEL_PATH", _DEFAULT_LOCAL_MODEL_PATH)
     DEFAULT_CONFIDENCE_THRESHOLD: float = float(os.getenv("DEFAULT_CONFIDENCE_THRESHOLD", "0.25"))
     DEFAULT_IOU_THRESHOLD: float = float(os.getenv("DEFAULT_IOU_THRESHOLD", "0.45"))
+
 
 
 

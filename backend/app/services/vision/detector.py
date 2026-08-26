@@ -21,6 +21,28 @@ logger = logging.getLogger(__name__)
 _detector_instance: Optional["YOLODetector"] = None
 
 
+def _download_model_from_url(url: str, dest_path: str) -> str:
+    """Download model weights from remote URL to dest_path with atomic file replacement."""
+    import urllib.request
+    import shutil
+
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    temp_path = dest_path + ".tmp"
+    logger.info("Downloading fine-tuned YOLO model from %s...", url)
+
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "SmartRetailBackend/1.0"},
+    )
+    with urllib.request.urlopen(req, timeout=120) as response, open(temp_path, "wb") as out_file:
+        shutil.copyfileobj(response, out_file)
+
+    os.replace(temp_path, dest_path)
+    file_size_mb = round(os.path.getsize(dest_path) / (1024 * 1024), 2)
+    logger.info("Successfully downloaded and cached YOLO model to %s (%.2f MB)", dest_path, file_size_mb)
+    return dest_path
+
+
 class YOLODetector:
     """Ultralytics YOLO wrapper for retail shelf product detection."""
 
@@ -30,17 +52,70 @@ class YOLODetector:
         self._model = None
         self._load_model()
 
+    def _resolve_model_path(self) -> str:
+        """Determine the model path following resolution priority:
+        1. Local fine-tuned model path (if exists on disk)
+        2. Cached fine-tuned model path (if exists on disk)
+        3. Download from remote URL (if configured)
+        4. Fallback to base yolov8n.pt
+        """
+        # 1. Configured or provided local model path (if exists on disk)
+        if self.model_path and os.path.exists(self.model_path):
+            logger.info("Found local fine-tuned YOLO model at: %s", self.model_path)
+            return self.model_path
+
+        # 2. Check if model is already cached locally
+        cache_dir = settings.YOLO_MODEL_CACHE_DIR
+        cached_model_path = os.path.join(cache_dir, "best.pt")
+        if os.path.exists(cached_model_path) and os.path.getsize(cached_model_path) > 0:
+            logger.info("Found cached fine-tuned YOLO model at: %s", cached_model_path)
+            return cached_model_path
+
+        # 3. Download from remote URL if configured
+        if settings.YOLO_MODEL_URL:
+            try:
+                logger.info("No local fine-tuned model found. Downloading from %s...", settings.YOLO_MODEL_URL)
+                return _download_model_from_url(settings.YOLO_MODEL_URL, cached_model_path)
+            except Exception as exc:
+                logger.warning(
+                    "Failed to download fine-tuned YOLO model from %s: %s. Falling back to base model.",
+                    settings.YOLO_MODEL_URL,
+                    exc,
+                )
+
+        # 4. Fallback to standard base YOLOv8n
+        logger.info("Using fallback base YOLO model: yolov8n.pt")
+        return "yolov8n.pt"
+
+
+
     def _load_model(self) -> None:
         """Load YOLO model weights cleanly with fallback."""
         try:
             from ultralytics import YOLO
 
-            logger.info("Loading YOLO model from %s...", self.model_path)
-            self._model = YOLO(self.model_path)
-            logger.info("YOLO model loaded successfully: task=%s", getattr(self._model, "task", "detect"))
+            resolved_path = self._resolve_model_path()
+            logger.info("Loading YOLO model from %s...", resolved_path)
+            try:
+                self._model = YOLO(resolved_path)
+                self.model_path = resolved_path
+                logger.info("YOLO model loaded successfully from %s (task=%s)", resolved_path, getattr(self._model, "task", "detect"))
+            except Exception as load_err:
+                if resolved_path != "yolov8n.pt":
+                    logger.warning(
+                        "Failed to load YOLO model from %s (%s). Attempting fallback to yolov8n.pt...",
+                        resolved_path,
+                        load_err,
+                    )
+                    self._model = YOLO("yolov8n.pt")
+                    self.model_path = "yolov8n.pt"
+                    logger.info("Fallback YOLO model yolov8n.pt loaded successfully.")
+                else:
+                    raise load_err
         except Exception as exc:
-            logger.error("Failed to load YOLO model from %s: %s", self.model_path, exc)
+            logger.error("Failed to load YOLO model: %s", exc)
             self._model = None
+
 
     @property
     def is_available(self) -> bool:
