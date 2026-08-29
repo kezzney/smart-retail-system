@@ -23,7 +23,25 @@ def create_app() -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):  # noqa: ARG001
-        """Application lifespan — seeds the database at startup if tables are empty."""
+        """Application lifespan — seeds database and logs CV runtime diagnostics at startup."""
+        # 1. Diagnostic logging for Computer Vision / OpenCV runtime environment
+        try:
+            import sys
+            import os
+            import ctypes.util
+            import cv2
+            xcb_path = ctypes.util.find_library("xcb")
+            logger.info("=== Runtime Environment Diagnostics ===")
+            logger.info("Python: %s", sys.version.split()[0])
+            logger.info("OpenCV: %s (path=%s)", cv2.__version__, getattr(cv2, "__file__", "unknown"))
+            logger.info("libxcb discoverable: %s", xcb_path if xcb_path else "N/A or headless")
+            logger.info("YOLO Model URL: %s", settings.YOLO_MODEL_URL)
+            logger.info("YOLO Model Path: %s (exists=%s)", settings.YOLO_MODEL_PATH, os.path.exists(settings.YOLO_MODEL_PATH))
+            logger.info("========================================")
+        except Exception as diag_err:
+            logger.warning("Diagnostic logging encountered an error: %s", diag_err)
+
+        # 2. Database seeding check
         from app.services.seed_service import seed_database_if_empty
         db = SessionLocal()
         try:
@@ -38,6 +56,7 @@ def create_app() -> FastAPI:
         finally:
             db.close()
         yield  # application runs here
+
 
     application = FastAPI(
         title=settings.PROJECT_NAME,

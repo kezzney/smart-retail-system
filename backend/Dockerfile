@@ -18,13 +18,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && ldconfig \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend/requirements.txt /app/requirements.txt
+COPY requirements.txt /app/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r /app/requirements.txt
 
-COPY backend/ /app/backend/
-COPY data/processed/ /app/data/processed/
+COPY . /app/backend/
 
 ENV PYTHONPATH=/app/backend
 ENV PYTHONUNBUFFERED=1
