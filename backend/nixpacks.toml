@@ -1,0 +1,10 @@
+# Nixpacks configuration for Railway deployment
+[phases.setup]
+nixPkgs = [
+    "libGL",
+    "libxcb",
+    "xorg.libX11",
+    "xorg.libXext",
+    "xorg.libXrender",
+    "glib"
+]
